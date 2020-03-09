@@ -1,0 +1,637 @@
+---
+title: "Filter_hmmer_results"
+author: "Ane Iturbide Martinez de Albeniz"
+date: "19/12/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(stringr)
+library(plyr)
+library(ggplot2)
+library(ggpubr)
+library(Rmisc)
+library(readxl)
+library(cowplot)
+library(directlabels)
+```
+
+```{r}
+results_hmmer <- read.csv("~/Desktop/TFM/HMMER_enteric/results_hmmer_enteric.csv")
+head(results_hmmer)
+results_hmmer$strain <- gsub(".fa", "", results_hmmer$strain)
+results_hmmer$strain <- gsub("_", " ", results_hmmer$strain)
+results_hmmer$id <- gsub(".hmm", "", results_hmmer$id)
+results_hmmer$strain <- gsub("Enterococcusecium", "Enterococcus faecium", results_hmmer$strain)
+```
+
+```{r}
+str(results_hmmer)
+results_hmmer$strain <- as.factor(results_hmmer$strain)
+results_hmmer$id <- as.factor(results_hmmer$id)
+```
+
+```{r}
+results_hmmer[,"gene"] <- NA
+
+for (i in 1:nrow(results_hmmer)){
+  if(str_detect(results_hmmer$id[i], 'TIGR02044') == TRUE)
+  { results_hmmer$gene[i] <- 'cueR'}
+  if(str_detect(results_hmmer$id[i], 'TIGR01480') == TRUE)
+  { results_hmmer$gene[i] <- 'cueO/pcoA/pcoA_psy'}
+  if(str_detect(results_hmmer$id[i], 'COG2217') == TRUE)
+  { results_hmmer$gene[i] <- 'copA'}
+  if(str_detect(results_hmmer$id[i], 'TIGR01386') == TRUE)
+  { results_hmmer$gene[i] <- 'cusS/pcoS/copS_psy'}
+  if(str_detect(results_hmmer$id[i], 'TIGR01387') == TRUE)
+  { results_hmmer$gene[i] <- 'cusR/pcoR/copR_psy'}
+  if(str_detect(results_hmmer$id[i], 'COG3696') == TRUE)
+  { results_hmmer$gene[i] <- 'cusA'}
+  if(str_detect(results_hmmer$id[i], 'COG0845') == TRUE)
+  { results_hmmer$gene[i] <- 'cusB'}
+  if(str_detect(results_hmmer$id[i], 'TIGR01845') == TRUE)
+  { results_hmmer$gene[i] <- 'cusC'}
+  if(str_detect(results_hmmer$id[i], 'COG5569') == TRUE)
+  { results_hmmer$gene[i] <- 'cusF'}
+  if(str_detect(results_hmmer$id[i], 'COG3667') == TRUE)
+  { results_hmmer$gene[i] <- 'pcoB/copB_psy'}
+  if(str_detect(results_hmmer$id[i], 'COG2372') == TRUE)
+  { results_hmmer$gene[i] <- 'pcoC/copC_psy'}
+  if(str_detect(results_hmmer$id[i], 'COG1276') == TRUE)
+  { results_hmmer$gene[i] <- 'pcoD/copD_psy'}
+  if(str_detect(results_hmmer$id[i], 'PF11106.8') == TRUE)
+  { results_hmmer$gene[i] <- 'pcoE/copF'}
+  if(str_detect(results_hmmer$id[i], 'COG0739') == TRUE)
+  { results_hmmer$gene[i] <- 'pcoG'}
+  if(str_detect(results_hmmer$id[i], 'TIGR00003') == TRUE)
+  { results_hmmer$gene[i] <- 'copZ_psy'}
+  if(str_detect(results_hmmer$id[i], 'TIGR02698') == TRUE)
+  { results_hmmer$gene[i] <- 'copY_strep'}
+  if(str_detect(results_hmmer$id[i], 'COG1937') == TRUE)
+  { results_hmmer$gene[i] <- 'csoR_staph'}
+}
+
+```
+
+
+```{r}
+results_hmmer[,"system"] <- NA
+
+for (i in 1:nrow(results_hmmer)){
+  if(str_detect(results_hmmer$id[i], 'TIGR02044') == TRUE)
+  { results_hmmer$system[i] <- 'Cue'}
+  if(str_detect(results_hmmer$id[i], 'TIGR01480') == TRUE)
+  { results_hmmer$system[i] <- 'Multisystem'}
+  if(str_detect(results_hmmer$id[i], 'COG2217') == TRUE)
+  { results_hmmer$system[i] <- 'Cue'}
+  if(str_detect(results_hmmer$id[i], 'TIGR01386') == TRUE)
+  { results_hmmer$system[i] <- 'Multisystem'}
+  if(str_detect(results_hmmer$id[i], 'TIGR01387') == TRUE)
+  { results_hmmer$system[i] <- 'Multisystem'}
+  if(str_detect(results_hmmer$id[i], 'COG3696') == TRUE)
+  { results_hmmer$system[i] <- 'Cus'}
+  if(str_detect(results_hmmer$id[i], 'COG0845') == TRUE)
+  { results_hmmer$system[i] <- 'Cus'}
+  if(str_detect(results_hmmer$id[i], 'TIGR01845') == TRUE)
+  { results_hmmer$system[i] <- 'Cus'}
+  if(str_detect(results_hmmer$id[i], 'COG5569') == TRUE)
+  { results_hmmer$system[i] <- 'Cus'}
+  if(str_detect(results_hmmer$id[i], 'COG3667') == TRUE)
+  { results_hmmer$system[i] <- 'Pco/Cop'}
+  if(str_detect(results_hmmer$id[i], 'COG2372') == TRUE)
+  { results_hmmer$system[i] <- 'Pco/Cop'}
+  if(str_detect(results_hmmer$id[i], 'COG1276') == TRUE)
+  { results_hmmer$system[i] <- 'Pco/Cop'}
+  if(str_detect(results_hmmer$id[i], 'PF11106.8') == TRUE)
+  { results_hmmer$system[i] <- 'Pco/Cop'}
+  if(str_detect(results_hmmer$id[i], 'COG0739') == TRUE)
+  { results_hmmer$system[i] <- 'Pco/Cop'}
+  if(str_detect(results_hmmer$id[i], 'TIGR00003') == TRUE)
+  { results_hmmer$system[i] <- 'Pco/Cop'}
+  if(str_detect(results_hmmer$id[i], 'TIGR02698') == TRUE)
+  { results_hmmer$system[i] <- 'Pco/Cop'}
+  if(str_detect(results_hmmer$id[i], 'COG1937') == TRUE)
+  { results_hmmer$system[i] <- 'Cso'}
+}
+
+```
+
+```{r}
+results_hmmer_alteromonas <- results_hmmer[results_hmmer$strain == "Alteromonas macleodii CUKW" | results_hmmer$strain == "Alteromonas macleodii KCC02",]
+write.csv(results_hmmer_alteromonas, file = "results_hmmer_alt.csv",row.names=FALSE)
+```
+
+```{r}
+results_hmmer[,"mega_accession"] <- NA
+results_hmmer$mega_accession<- with(results_hmmer, paste0(strain, "_",accession))
+
+```
+
+
+```{r}
+head(results_hmmer, 10)
+str(results_hmmer)
+ord_results_hmmer <- results_hmmer[order(results_hmmer$mega_accession, results_hmmer$e.value),]
+head(ord_results_hmmer)
+table(duplicated(ord_results_hmmer$mega_accession))
+```
+
+```{r}
+results <- ord_results_hmmer[!duplicated(ord_results_hmmer$mega_accession),]
+table(duplicated(results$mega_accession))
+ord_results <- results[order(results$id, results$strain),]
+write.csv(ord_results, file = "results_hmmer_filtered.csv",row.names=FALSE)
+```
+
+```{r}
+results_hmmer_alteromonas_filtered <- ord_results[ord_results$strain == "Alteromonas macleodii CUKW" | ord_results$strain == "Alteromonas macleodii KCC02",]
+write.csv(results_hmmer_alteromonas_filtered, file = "results_hmmer_alt_filtered.csv",row.names=FALSE)
+```
+
+```{r}
+
+results_e_3 <- ord_results[which(ord_results$e.value<=10e-3),]
+results_e_5 <- ord_results[which(ord_results$e.value<=10e-5),]
+results_e_7 <- ord_results[which(ord_results$e.value<=10e-7),]
+results_e_10 <- ord_results[which(ord_results$e.value<=10e-10),]
+results_e_20 <- ord_results[which(ord_results$e.value<=10e-20),]
+results_e_30 <- ord_results[which(ord_results$e.value<=10e-30),]
+results_e_40 <- ord_results[which(ord_results$e.value<=10e-40),]
+results_e_50 <- ord_results[which(ord_results$e.value<=10e-50),]
+results_e_60 <- ord_results[which(ord_results$e.value<=10e-60),]
+results_e_70 <- ord_results[which(ord_results$e.value<=10e-70),]
+results_e_80 <- ord_results[which(ord_results$e.value<=10e-80),]
+results_e_90 <- ord_results[which(ord_results$e.value<=10e-90),]
+results_e_100 <- ord_results[which(ord_results$e.value<=10e-100),]
+
+nrow(results_e_3)
+nrow(results_e_5)
+nrow(results_e_7)
+nrow(results_e_10)
+nrow(results_e_20)
+nrow(results_e_30)
+nrow(results_e_40)
+nrow(results_e_50)
+nrow(results_e_60)
+nrow(results_e_70)
+nrow(results_e_80)
+nrow(results_e_90)
+nrow(results_e_100)
+```
+
+```{r}
+E.value <- c('10E-3','10E-5','10E-7', '10E-10', '10E-20', '10E-30', '10E-40', '10E-50', '10E-60', '10E-70')
+
+Hit_number <- c(nrow(results_e_3), nrow(results_e_5), nrow(results_e_7), nrow(results_e_10), nrow(results_e_20), nrow(results_e_30), nrow(results_e_40), nrow(results_e_50), nrow(results_e_60), nrow(results_e_70))
+
+Total_hits <- cbind(E.value, Hit_number)
+Total_hits <- as.data.frame(Total_hits)
+
+Total_hits$Hit_number <- as.numeric(as.character(Total_hits$Hit_number))
+```
+
+```{r}
+p_rep<-ggplot(Total_hits, aes(x=E.value, y=Hit_number)) +
+    geom_bar(stat="identity", width=0.5, color= "#174668", fill = "#174668", alpha = 0.75) +
+  scale_x_discrete(limits=c('10E-3','10E-5','10E-7', '10E-10', '10E-20', '10E-30', '10E-40', '10E-50', '10E-60', '10E-70')) +
+  theme_minimal() + ylab('Hit number') + xlab('') +
+  theme(text = element_text(size = 25), legend.text=element_text(size=20), panel.grid.major.x = element_blank(), panel.grid.major.y = element_line(size=.3), panel.grid.minor.y = element_line(size=.3), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), axis.title.x = element_text(margin = margin(t = 0, r = 0, b = 0, l = 0)), axis.text.x = element_text(angle = 45, hjust = 0.75))
+p_rep
+```
+
+```{r}
+results_e_3_strain_system <- data.frame(table(results_e_3$strain, results_e_3$system))
+write.csv(results_e_3_strain_system, file = "results_e_3_strain_system.csv",row.names=FALSE)
+results_e_5_strain_system <- data.frame(table(results_e_5$strain, results_e_5$system))
+write.csv(results_e_5_strain_system, file = "results_e_5_strain_system.csv",row.names=FALSE)
+results_e_7_strain_system <- data.frame(table(results_e_7$strain, results_e_7$system))
+write.csv(results_e_7_strain_system, file = "results_e_7_strain_system.csv",row.names=FALSE)
+results_e_10_strain_system <- data.frame(table(results_e_10$strain, results_e_10$system))
+write.csv(results_e_10_strain_system, file = "results_e_10_strain_system.csv",row.names=FALSE)
+results_e_20_strain_system <- data.frame(table(results_e_20$strain, results_e_20$system))
+write.csv(results_e_20_strain_system, file = "results_e_20_strain_system.csv",row.names=FALSE)
+results_e_30_strain_system <- data.frame(table(results_e_30$strain, results_e_30$system))
+write.csv(results_e_30_strain_system, file = "results_e_30_strain_system.csv",row.names=FALSE)
+results_e_40_strain_system <- data.frame(table(results_e_40$strain, results_e_40$system))
+write.csv(results_e_40_strain_system, file = "results_e_40_strain_system.csv",row.names=FALSE)
+results_e_50_strain_system <- data.frame(table(results_e_50$strain, results_e_50$system))
+write.csv(results_e_50_strain_system, file = "results_e_50_strain_system.csv",row.names=FALSE)
+results_e_60_strain_system <- data.frame(table(results_e_60$strain, results_e_60$system))
+write.csv(results_e_60_strain_system, file = "results_e_60_strain_system.csv",row.names=FALSE)
+results_e_70_strain_system <- data.frame(table(results_e_70$strain, results_e_70$system))
+write.csv(results_e_70_strain_system, file = "results_e_70_strain_system.csv",row.names=FALSE)
+```
+
+
+```{r}
+results_e_3_strain <- data.frame(table(results_e_3$strain))
+write.csv(results_e_3_strain, file = "results_e_3_strain.csv",row.names=FALSE)
+results_e_5_strain <- data.frame(table(results_e_5$strain))
+write.csv(results_e_5_strain, file = "results_e_5_strain.csv",row.names=FALSE)
+results_e_7_strain <- data.frame(table(results_e_7$strain))
+write.csv(results_e_7_strain, file = "results_e_7_strain.csv",row.names=FALSE)
+results_e_10_strain <- data.frame(table(results_e_10$strain))
+write.csv(results_e_10_strain, file = "results_e_10_strain.csv",row.names=FALSE)
+results_e_20_strain <- data.frame(table(results_e_20$strain))
+write.csv(results_e_20_strain, file = "results_e_20_strain.csv",row.names=FALSE)
+results_e_30_strain <- data.frame(table(results_e_30$strain))
+write.csv(results_e_30_strain, file = "results_e_30_strain.csv",row.names=FALSE)
+results_e_40_strain <- data.frame(table(results_e_40$strain))
+write.csv(results_e_40_strain, file = "results_e_40_strain.csv",row.names=FALSE)
+results_e_50_strain <- data.frame(table(results_e_50$strain))
+write.csv(results_e_50_strain, file = "results_e_50_strain.csv",row.names=FALSE)
+results_e_60_strain <- data.frame(table(results_e_60$strain))
+write.csv(results_e_60_strain, file = "results_e_60_strain.csv",row.names=FALSE)
+results_e_70_strain <- data.frame(table(results_e_70$strain))
+write.csv(results_e_70_strain, file = "results_e_70_strain.csv",row.names=FALSE)
+```
+------
+
+```{r}
+results_species_strain <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_strain.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+
+results_species_strain_Alteromonas <- results_species_strain[results_species_strain$Species == 'Alteromonas macleodii',]
+
+str(results_species_strain)
+```
+
+```{r}
+# Color vectors
+strainscol <- c("#174668", "#0682A6", "grey18", "firebrick",
+"#E3B7D8", "#D89AC8", "#CD7DB9","#c361aa", "#A0508C", "#7D3E6D", "#592D4E",
+"#D95F02",
+"#BBA961", "#ad963e", "#8E7B33",
+"#B9D698", "#9DC66F", "#81B646", "#66A61E", "#548819", "#416A14", "#2F4C0E")
+
+speciescol <- c("#45A3E6", "#D1345B", "#F7A278", "#A5BE00", "#6DD3CE", "#FFBF00", "#FF5C92", "#8B5FBF")
+```
+
+```{r}
+#results_species_strain_b <- read.csv("~/Desktop/TFM/HMMER_3/results_species_strain_b.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+
+#results_species_strain_Alteromonas <- results_species_strain[results_species_strain$Species == 'Alteromonas macleodii',]
+```
+
+```{r}
+p4<-ggplot(results_species_strain, aes(x=e_value, y=Hits, group=Strain, colour=Strain)) +
+  geom_line() +
+  geom_point() +
+   scale_x_discrete(limits=c(' ', ' ', ' ', '10E-3','10E-5','10E-7', '10E-10', '10E-20', '10E-30', '10E-40', '10E-50', '10E-60', '10E-70')) +
+  geom_dl(aes(label = Strain), method = list('first.bumpup', dl.trans(x = x - 0.2), "first.points", cex = 0.8)) +
+ scale_fill_manual(values=strainscol) + theme_minimal() + ylab('Hit number') +  scale_color_manual(values=strainscol) + xlab('') + theme(text = element_text(size = 15), axis.text.x = element_text(angle = 45), legend.position = "none", panel.grid.major.x = element_blank(), panel.grid.major.y = element_line(size=.3), panel.grid.minor.y = element_line(size=.3), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)))
+```
+
+
+```{r}
+results_species_cop_pco <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_cop_pco.csv", sep=";", colClasses = c('factor', 'factor', 'factor', 'numeric', 'factor'))
+results_species_cue <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_cue.csv", sep=";", colClasses = c('factor', 'factor', 'factor', 'numeric', 'factor'))
+results_species_cus <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_cus.csv", sep=";", colClasses = c('factor', 'factor', 'factor', 'numeric', 'factor'))
+results_species_multisystem <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_multisystem.csv", sep=";", colClasses = c('factor', 'factor', 'factor', 'numeric', 'factor'))
+```
+
+
+```{r}
+pa<-ggplot(results_species_cop_pco, aes(x=e.value, y=Hits, group=Strain, colour=Strain)) +
+  geom_line() +
+  geom_point() +
+   scale_x_discrete(limits=c(' ', ' ', ' ', '10E-3','10E-5','10E-7', '10E-10', '10E-20', '10E-30', '10E-40', '10E-50', '10E-60', '10E-70')) +
+  geom_dl(aes(label = Strain), method = list('first.bumpup', dl.trans(x = x - 0.2), "first.points", cex = 0.8)) +
+ scale_fill_manual(values=strainscol) + theme_minimal() + ylab('Hit number') + ggtitle("Cop/Pco systems") +
+scale_color_manual(values=strainscol) + xlab('') + theme(text = element_text(size = 15), axis.text.x = element_text(angle = 45), legend.position = "none", panel.grid.major.x = element_blank(), panel.grid.major.y = element_line(size=.3), panel.grid.minor.y = element_line(size=.3), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)))
+
+pb<-ggplot(results_species_multisystem, aes(x=e.value, y=Hits, group=Strain, colour=Strain)) +
+  geom_line() +
+  geom_point() +
+   scale_x_discrete(limits=c(' ', ' ', ' ', '10E-3','10E-5','10E-7', '10E-10', '10E-20', '10E-30', '10E-40', '10E-50', '10E-60', '10E-70')) +
+  geom_dl(aes(label = Strain), method = list('first.bumpup', dl.trans(x = x - 0.2), "first.points", cex = 0.8)) +
+ scale_fill_manual(values=strainscol) + theme_minimal() + ylab('Hit number') + ggtitle("Multisystem") +
+scale_color_manual(values=strainscol) + xlab('') + theme(text = element_text(size = 15), axis.text.x = element_text(angle = 45), legend.position = "none", panel.grid.major.x = element_blank(), panel.grid.major.y = element_line(size=.3), panel.grid.minor.y = element_line(size=.3), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)))
+
+pc<-ggplot(results_species_cue, aes(x=e.value, y=Hits, group=Strain, colour=Strain)) +
+  geom_line() +
+  geom_point() +
+   scale_x_discrete(limits=c(' ', ' ', ' ', '10E-3','10E-5','10E-7', '10E-10', '10E-20', '10E-30', '10E-40', '10E-50', '10E-60', '10E-70')) +
+  geom_dl(aes(label = Strain), method = list('first.bumpup', dl.trans(x = x - 0.2), "first.points", cex = 0.8)) +
+ scale_fill_manual(values=strainscol) + theme_minimal() + ylab('Hit number') + ggtitle("Cue system") +
+scale_color_manual(values=strainscol) + xlab('') + theme(text = element_text(size = 15), axis.text.x = element_text(angle = 45), legend.position = "none", panel.grid.major.x = element_blank(), panel.grid.major.y = element_line(size=.3), panel.grid.minor.y = element_line(size=.3), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)))
+
+pd<-ggplot(results_species_cus, aes(x=e.value, y=Hits, group=Strain, colour=Strain)) +
+  geom_line() +
+  geom_point() +
+   scale_x_discrete(limits=c(' ', ' ', ' ', '10E-3','10E-5','10E-7', '10E-10', '10E-20', '10E-30', '10E-40', '10E-50', '10E-60', '10E-70')) +
+  geom_dl(aes(label = Strain), method = list('first.bumpup', dl.trans(x = x - 0.2), "first.points", cex = 0.8)) +
+ scale_fill_manual(values=strainscol) + theme_minimal() + ylab('Hit number') + ggtitle("Cus systems") +
+scale_color_manual(values=strainscol) + xlab('') + theme(text = element_text(size = 15), axis.text.x = element_text(angle = 45), legend.position = "none", panel.grid.major.x = element_blank(), panel.grid.major.y = element_line(size=.3), panel.grid.minor.y = element_line(size=.3), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)))
+```
+
+
+```{r}
+prot_tot_gene_e3 <- data.frame(table(results_e_3$strain, results_e_3$gene))
+colnames(prot_tot_gene_e3) <- c('Strain', 'Gene', 'Hits')
+prot_tot_gene_e5 <- data.frame(table(results_e_5$strain, results_e_5$gene))
+colnames(prot_tot_gene_e5) <- c('Strain', 'Gene', 'Hits')
+prot_tot_gene_e7 <- data.frame(table(results_e_7$strain, results_e_7$gene))
+colnames(prot_tot_gene_e7) <- c('Strain', 'Gene', 'Hits')
+prot_tot_gene_e10 <- data.frame(table(results_e_10$strain, results_e_10$gene))
+colnames(prot_tot_gene_e10) <- c('Strain', 'Gene', 'Hits')
+prot_tot_gene_e20 <- data.frame(table(results_e_20$strain, results_e_20$gene))
+colnames(prot_tot_gene_e20) <- c('Strain', 'Gene', 'Hits')
+prot_tot_gene_e30 <- data.frame(table(results_e_30$strain, results_e_30$gene))
+colnames(prot_tot_gene_e30) <- c('Strain', 'Gene', 'Hits')
+prot_tot_gene_e40 <- data.frame(table(results_e_40$strain, results_e_40$gene))
+colnames(prot_tot_gene_e40) <- c('Strain', 'Gene', 'Hits')
+prot_tot_gene_e50 <- data.frame(table(results_e_50$strain, results_e_50$gene))
+colnames(prot_tot_gene_e50) <- c('Strain', 'Gene', 'Hits')
+prot_tot_gene_e60 <- data.frame(table(results_e_60$strain, results_e_60$gene))
+colnames(prot_tot_gene_e60) <- c('Strain', 'Gene', 'Hits')
+prot_tot_gene_e70 <- data.frame(table(results_e_70$strain, results_e_70$gene))
+colnames(prot_tot_gene_e70) <- c('Strain', 'Gene', 'Hits')
+```
+
+```{r}
+results_e_3_gene <- data.frame(prot_tot_gene_e3)
+write.csv(results_e_3_gene, file = "results_e_3_gene.csv",row.names=FALSE)
+results_e_5_gene <- data.frame(prot_tot_gene_e5)
+write.csv(results_e_5_gene, file = "results_e_5_gene.csv",row.names=FALSE)
+results_e_7_gene <- data.frame(prot_tot_gene_e7)
+write.csv(results_e_7_gene, file = "results_e_7_gene.csv",row.names=FALSE)
+results_e_10_gene <- data.frame(prot_tot_gene_e10)
+write.csv(results_e_10_gene, file = "results_e_10_gene.csv",row.names=FALSE)
+results_e_20_gene <- data.frame(prot_tot_gene_e20)
+write.csv(results_e_20_gene, file = "results_e_20_gene.csv",row.names=FALSE)
+results_e_30_gene <- data.frame(prot_tot_gene_e30)
+write.csv(results_e_30_gene, file = "results_e_30_gene.csv",row.names=FALSE)
+results_e_40_gene <- data.frame(prot_tot_gene_e40)
+write.csv(results_e_40_gene, file = "results_e_40_gene.csv",row.names=FALSE)
+results_e_50_gene <- data.frame(prot_tot_gene_e50)
+write.csv(results_e_50_gene, file = "results_e_50_gene.csv",row.names=FALSE)
+results_e_60_gene <- data.frame(prot_tot_gene_e60)
+write.csv(results_e_60_gene, file = "results_e_60_gene.csv",row.names=FALSE)
+results_e_70_gene <- data.frame(prot_tot_gene_e70)
+write.csv(results_e_70_gene, file = "results_e_70_gene.csv",row.names=FALSE)
+
+```
+
+```{r}
+results_species_gene_e3 <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_gene_e3.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+results_species_gene_e5 <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_gene_e5.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+results_species_gene_e7 <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_gene_e7.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+results_species_gene_e10 <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_gene_e10.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+results_species_gene_e20 <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_gene_e20.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+results_species_gene_e30 <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_gene_e30.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+results_species_gene_e40 <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_gene_e40.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+results_species_gene_e50 <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_gene_e50.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+results_species_gene_e60 <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_gene_e60.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+results_species_gene_e70 <- read.csv("~/Desktop/TFM/HMMER_enteric/results_species_gene_e70.csv", sep=";", colClasses = c('factor', 'factor', 'numeric', 'factor'))
+
+```
+
+```{r}
+
+results_species_gene_e3_cop_pco <- results_species_gene_e3[results_species_gene_e3$System=='Cop/Pco',]
+results_species_gene_e3_cus <- results_species_gene_e3[results_species_gene_e3$System=='Cus',]
+results_species_gene_e3_cue <- results_species_gene_e3[results_species_gene_e3$System=='Cue',]
+results_species_gene_e3_multisystem <- results_species_gene_e3[results_species_gene_e3$System=='Multisystem',]
+
+results_species_gene_e5_cop_pco <- results_species_gene_e5[results_species_gene_e5$System=='Cop/Pco',]
+results_species_gene_e5_cus <- results_species_gene_e5[results_species_gene_e5$System=='Cus',]
+results_species_gene_e5_cue <- results_species_gene_e5[results_species_gene_e5$System=='Cue',]
+results_species_gene_e5_multisystem <- results_species_gene_e5[results_species_gene_e5$System=='Multisystem',]
+
+results_species_gene_e7_cop_pco <- results_species_gene_e7[results_species_gene_e7$System=='Cop/Pco',]
+results_species_gene_e7_cus <- results_species_gene_e7[results_species_gene_e7$System=='Cus',]
+results_species_gene_e7_cue <- results_species_gene_e7[results_species_gene_e7$System=='Cue',]
+results_species_gene_e7_multisystem <- results_species_gene_e7[results_species_gene_e7$System=='Multisystem',]
+
+results_species_gene_e10_cop_pco <- results_species_gene_e10[results_species_gene_e10$System=='Cop/Pco',]
+results_species_gene_e10_cus <- results_species_gene_e10[results_species_gene_e10$System=='Cus',]
+results_species_gene_e10_cue <- results_species_gene_e10[results_species_gene_e10$System=='Cue',]
+results_species_gene_e10_multisystem <- results_species_gene_e10[results_species_gene_e10$System=='Multisystem',]
+
+results_species_gene_e20_cop_pco <- results_species_gene_e20[results_species_gene_e20$System=='Cop/Pco',]
+results_species_gene_e20_cus <- results_species_gene_e20[results_species_gene_e20$System=='Cus',]
+results_species_gene_e20_cue <- results_species_gene_e20[results_species_gene_e20$System=='Cue',]
+results_species_gene_e20_multisystem <- results_species_gene_e20[results_species_gene_e20$System=='Multisystem',]
+
+results_species_gene_e30_cop_pco <- results_species_gene_e30[results_species_gene_e30$System=='Cop/Pco',]
+results_species_gene_e30_cus <- results_species_gene_e30[results_species_gene_e30$System=='Cus',]
+results_species_gene_e30_cue <- results_species_gene_e30[results_species_gene_e30$System=='Cue',]
+results_species_gene_e30_multisystem <- results_species_gene_e30[results_species_gene_e30$System=='Multisystem',]
+
+results_species_gene_e40_cop_pco <- results_species_gene_e40[results_species_gene_e40$System=='Cop/Pco',]
+results_species_gene_e40_cus <- results_species_gene_e40[results_species_gene_e40$System=='Cus',]
+results_species_gene_e40_cue <- results_species_gene_e40[results_species_gene_e40$System=='Cue',]
+results_species_gene_e40_multisystem <- results_species_gene_e40[results_species_gene_e40$System=='Multisystem',]
+
+results_species_gene_e50_cop_pco <- results_species_gene_e50[results_species_gene_e50$System=='Cop/Pco',]
+results_species_gene_e50_cus <- results_species_gene_e50[results_species_gene_e50$System=='Cus',]
+results_species_gene_e50_cue <- results_species_gene_e50[results_species_gene_e50$System=='Cue',]
+results_species_gene_e50_multisystem <- results_species_gene_e50[results_species_gene_e50$System=='Multisystem',]
+
+results_species_gene_e60_cop_pco <- results_species_gene_e60[results_species_gene_e60$System=='Cop/Pco',]
+results_species_gene_e60_cus <- results_species_gene_e60[results_species_gene_e60$System=='Cus',]
+results_species_gene_e60_cue <- results_species_gene_e60[results_species_gene_e60$System=='Cue',]
+results_species_gene_e60_multisystem <- results_species_gene_e60[results_species_gene_e70$System=='Multisystem',]
+
+results_species_gene_e70_cop_pco <- results_species_gene_e70[results_species_gene_e70$System=='Cop/Pco',]
+results_species_gene_e70_cus <- results_species_gene_e70[results_species_gene_e70$System=='Cus',]
+results_species_gene_e70_cue <- results_species_gene_e70[results_species_gene_e70$System=='Cue',]
+results_species_gene_e70_multisystem <- results_species_gene_e70[results_species_gene_e70$System=='Multisystem',]
+
+```
+
+
+```{r}
+p7<-ggplot(results_species_gene_e3_cop_pco, aes(x=Gene, y=Hits, fill=Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cop/Pco systems") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,15), breaks=seq(0,15,5), expand = c(0,0))
+
+p8<-ggplot(results_species_gene_e3_multisystem, aes(x=Gene, y=Hits, fill = Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Multisystem") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,80), breaks=seq(0,80,10), expand = c(0,0))
+
+p9<-ggplot(results_species_gene_e3_cue, aes(x=Gene, y=Hits, fill = Strain)) +
+   geom_bar(stat = "identity", position = position_dodge()) +
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cue system") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,25), breaks=seq(0,25,5), expand = c(0,0))
+
+p10<-ggplot(results_species_gene_e3_cus, aes(x=Gene, y=Hits, fill = Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cus system") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,40), breaks=seq(0,40,5), expand = c(0,0))
+
+
+
+e_3 <- ggarrange(p9, p10, p7, p8, ncol=2, nrow=2, common.legend = TRUE, legend="right")
+annotate_figure(e_3,
+               bottom = text_grob("e_value < 10E-3",
+                                  hjust = 1.2, vjust = -1, x = 1, size = 20))
+```
+
+```{r}
+p11<-ggplot(results_species_gene_e10_cop_pco, aes(x=Gene, y=Hits, fill=Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cop/Pco systems") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,15), breaks=seq(0,15,5), expand = c(0,0))
+
+p12<-ggplot(results_species_gene_e10_multisystem, aes(x=Gene, y=Hits, fill = Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Multisystem") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,60), breaks=seq(0,60,10), expand = c(0,0))
+
+p13<-ggplot(results_species_gene_e10_cue, aes(x=Gene, y=Hits, fill = Strain)) +
+   geom_bar(stat = "identity", position = position_dodge()) +
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cue system") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,20), breaks=seq(0,20,5), expand = c(0,0))
+
+p14<-ggplot(results_species_gene_e10_cus, aes(x=Gene, y=Hits, fill = Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cus system") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,30), breaks=seq(0,30,5), expand = c(0,0))
+
+
+
+e_10 <- ggarrange(p13, p14, p11, p12, ncol=2, nrow=2, common.legend = TRUE, legend="right")
+annotate_figure(e_10,
+               bottom = text_grob("e_value < 10E-10",
+                                  hjust = 1.2, vjust = -1, x = 1, size = 20))
+```
+
+```{r}
+p15<-ggplot(results_species_gene_e30_cop_pco, aes(x=Gene, y=Hits, fill=Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cop/Pco systems") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,6), breaks=seq(0,6,2), expand = c(0,0))
+
+p16<-ggplot(results_species_gene_e30_multisystem, aes(x=Gene, y=Hits, fill = Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Multisystem") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,30), breaks=seq(0,30,10), expand = c(0,0))
+
+p17<-ggplot(results_species_gene_e30_cue, aes(x=Gene, y=Hits, fill = Strain)) +
+   geom_bar(stat = "identity", position = position_dodge()) +
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cue system") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,20), breaks=seq(0,20,5), expand = c(0,0))
+
+p18<-ggplot(results_species_gene_e30_cus, aes(x=Gene, y=Hits, fill = Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cus system") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,30), breaks=seq(0,30,5), expand = c(0,0))
+
+
+
+e_30 <- ggarrange(p17, p18, p15, p16, ncol=2, nrow=2, common.legend = TRUE, legend="right")
+annotate_figure(e_30,
+               bottom = text_grob("e_value < 10E-30",
+                                  hjust = 1.2, vjust = -1, x = 1, size = 20))
+```
+
+```{r}
+p19<-ggplot(results_species_gene_e50_cop_pco, aes(x=Gene, y=Hits, fill=Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cop/Pco systems") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,4), breaks=seq(0,4,1), expand = c(0,0))
+
+p20<-ggplot(results_species_gene_e50_multisystem, aes(x=Gene, y=Hits, fill = Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Multisystem") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,12), breaks=seq(0,12,2), expand = c(0,0))
+
+p21<-ggplot(results_species_gene_e50_cue, aes(x=Gene, y=Hits, fill = Strain)) +
+   geom_bar(stat = "identity", position = position_dodge()) +
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cue system") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,20), breaks=seq(0,20,5), expand = c(0,0))
+
+p22<-ggplot(results_species_gene_e50_cus, aes(x=Gene, y=Hits, fill = Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("Cus system") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,30), breaks=seq(0,30,5), expand = c(0,0))
+
+
+
+e_50 <- ggarrange(p21, p22, p19, p20, ncol=2, nrow=2, common.legend = TRUE, legend="right")
+annotate_figure(e_50,
+               bottom = text_grob("e_value < 10E-50",
+                                  hjust = 1.2, vjust = -1, x = 1, size = 20))
+```
+
+```{r}
+p23<-ggplot(results_species_gene_e30, aes(x=Gene, y=Hits, fill=Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) + ggtitle("All systems") +
+  theme(text = element_text(size = 15), legend.text=element_text(size=8), axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,30), breaks=seq(0,30,5), expand = c(0,0))
+
+annotate_figure(p23,
+               bottom = text_grob("e_value < 10E-30",
+                                  hjust = 1.2, vjust = -1, x = 1, size = 20))
+```
+
+```{r}
+results_species_strain_e30 <- results_species_strain[results_species_strain$e_value == "10E-30",]
+```
+
+```{r}
+p24<-ggplot(results_species_strain_e30, aes(x=Strain, y=Hits, fill=Strain)) +
+  geom_bar(stat = "identity", position = position_dodge()) + 
+  ylab('Hit number') + xlab('') +
+  scale_fill_manual(values=strainscol) +
+  theme(text = element_text(size = 15), legend.position = "none", axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)), panel.background = element_blank(), axis.line.x = element_line(color="black", size = 0.5), axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+        axis.line.y = element_line(color="black", size = 0.5), plot.margin=unit(c(0.5,1,0.5,0.5),"cm")) +
+  scale_y_continuous(limits=c(0,120), breaks=seq(0,120,30), expand = c(0,0))
+```
+
